@@ -1,0 +1,143 @@
+// ===============================================================================
+// NASSAU CANDY DISTRIBUTOR - POWER BI DAX MEASURES LIBRARY
+// ===============================================================================
+
+// -------------------------------------------------------------------------------
+// 1. CORE FINANCIAL MEASURES
+// -------------------------------------------------------------------------------
+
+Total Sales = 
+SUM(Fact_Orders[Sales])
+
+Total Cost = 
+SUM(Fact_Orders[Cost])
+
+Total Gross Profit = 
+SUM(Fact_Orders[Gross Profit])
+
+Gross Margin % = 
+DIVIDE([Total Gross Profit], [Total Sales], 0)
+
+Total Units = 
+SUM(Fact_Orders[Units])
+
+Profit per Unit = 
+DIVIDE([Total Gross Profit], [Total Units], 0)
+
+Price per Unit = 
+DIVIDE([Total Sales], [Total Units], 0)
+
+Cost per Unit = 
+DIVIDE([Total Cost], [Total Units], 0)
+
+Total Orders = 
+COUNTROWS(Fact_Orders)
+
+Avg Transit Days = 
+AVERAGE(Fact_Orders[Transit Days])
+
+
+// -------------------------------------------------------------------------------
+// 2. DIVISION & PORTFOLIO SHARE MEASURES
+// -------------------------------------------------------------------------------
+
+Revenue Share % = 
+DIVIDE(
+    [Total Sales], 
+    CALCULATE([Total Sales], ALL(Dim_Products)), 
+    0
+)
+
+Profit Share % = 
+DIVIDE(
+    [Total Gross Profit], 
+    CALCULATE([Total Gross Profit], ALL(Dim_Products)), 
+    0
+)
+
+Financial Imbalance Index = 
+[Profit Share %] - [Revenue Share %]
+
+
+// -------------------------------------------------------------------------------
+// 3. PARETO 80/20 CUMULATIVE CONCENTRATION MEASURES
+// -------------------------------------------------------------------------------
+
+Cumulative Profit = 
+VAR CurrentProductProfit = [Total Gross Profit]
+RETURN
+CALCULATE(
+    [Total Gross Profit],
+    FILTER(
+        ALL(Dim_Products[Product Name]),
+        [Total Gross Profit] >= CurrentProductProfit
+    )
+)
+
+Cumulative Profit % = 
+DIVIDE([Cumulative Profit], CALCULATE([Total Gross Profit], ALL(Dim_Products)), 0)
+
+Pareto Profit Category = 
+IF([Cumulative Profit %] <= 0.80, "Top 80% Profit Driver", "Bottom 20% Profit Drag")
+
+Cumulative Revenue = 
+VAR CurrentProductSales = [Total Sales]
+RETURN
+CALCULATE(
+    [Total Sales],
+    FILTER(
+        ALL(Dim_Products[Product Name]),
+        [Total Sales] >= CurrentProductSales
+    )
+)
+
+Cumulative Revenue % = 
+DIVIDE([Cumulative Revenue], CALCULATE([Total Sales], ALL(Dim_Products)), 0)
+
+
+// -------------------------------------------------------------------------------
+// 4. AUTOMATED PRODUCT RISK DIAGNOSTICS & QUADRANT MATRIX
+// -------------------------------------------------------------------------------
+
+Diagnostic Flag DAX = 
+SWITCH(
+    TRUE(),
+    [Gross Margin %] < 0.25 && [Total Sales] > 5000, "Reprice Immediately",
+    DIVIDE([Total Cost], [Total Sales], 0) > 0.65, "Renegotiate Cost",
+    [Gross Margin %] < 0.20 && [Profit Share %] < 0.02, "Discontinuation Review",
+    [Gross Margin %] >= 0.45, "High Efficiency Driver",
+    "Stable Core Product"
+)
+
+Strategic Quadrant DAX = 
+VAR MedianSales = MEDIANX(ALL(Dim_Products), [Total Sales])
+VAR MedianMargin = MEDIANX(ALL(Dim_Products), [Gross Margin %])
+VAR CurrentSales = [Total Sales]
+VAR CurrentMargin = [Gross Margin %]
+RETURN
+IF(
+    CurrentSales >= MedianSales,
+    IF(CurrentMargin >= MedianMargin, "Stars (High Profit & Volume)", "Volume Drivers (High Sales, Low Margin)"),
+    IF(CurrentMargin >= MedianMargin, "Niche Drivers (Low Sales, High Margin)", "Laggards (Low Sales, Low Profit)")
+)
+
+
+// -------------------------------------------------------------------------------
+// 5. INTERACTIVE REPRICING SCENARIO PARAMETER MEASURES
+// -------------------------------------------------------------------------------
+// Note: Create a What-If Parameter named 'Price Increase %' with range 0% to 50%
+
+Simulated Price per Unit = 
+[Price per Unit] * (1 + 'Price Increase %'[Price Increase % Value])
+
+Simulated Total Revenue = 
+[Simulated Price per Unit] * [Total Units]
+
+Simulated Gross Profit = 
+[Simulated Total Revenue] - [Total Cost]
+
+Simulated Gross Margin % = 
+DIVIDE([Simulated Gross Profit], [Simulated Total Revenue], 0)
+
+Incremental Profit Gain = 
+[Simulated Gross Profit] - [Total Gross Profit]
