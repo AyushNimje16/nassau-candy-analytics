@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "dataset": {
+    "byPath": {
+      "path": "Nassau_Candy_Analytics.Dataset"
+    }
+  },
+  "report": {
+    "byPath": {
+      "path": "Nassau_Candy_Analytics.Report"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "version": "1.0",
+  "dataset": {
+    "byPath": {
+      "path": "model.bim"
+    }
+  }
+}
